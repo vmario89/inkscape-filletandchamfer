@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import inkex, simplestyle, math
 from simpletransform import computePointInNode
 import svgpathtools
+from lxml import etree
 
 KAPPA = 4/3. * (math.sqrt(2)-1)
 
@@ -160,18 +161,14 @@ def d_str(self, useSandT=False, use_closed_attrib=False, rel=False):
 class FilletChamfer(inkex.Effect):
     def __init__(self):
         inkex.Effect.__init__(self)
-        self.OptionParser.add_option("-t", "--type",
-                        action="store", type="string",
-                        dest="fillet_type", default="fillet",
-                        help="Selects whether using fillet or chamfer")
-        self.OptionParser.add_option("-R", "--radius",
-                        action="store", type="float",
-                        dest="radius", default=60.0,
-                        help="The radius")
+        self.arg_parser.add_argument("-t", "--fillet_type", default="fillet", help="Selects whether using fillet or chamfer")
+        self.arg_parser.add_argument("-R", "--radius", type=float, default=60.0, help="The radius")
+        self.arg_parser.add_argument('--unit', default='px', help='units of measurement')
+        self.arg_parser.add_argument("--remove", type=inkex.Boolean, default=False, help="If True, control object will be removed")
         
     def addEle(self, ele, parent, props):
         # https://inkscape.org/~pacogarcia/%E2%98%85new-version-of-shapes-extension
-        elem = inkex.etree.SubElement(parent, ele)
+        elem = etree.SubElement(parent, ele)
         for n in props: elem.set(n,props[n])
         return elem
     
@@ -274,21 +271,24 @@ class FilletChamfer(inkex.Effect):
         return d_str(new_p, use_closed_attrib=True, rel=True)
 
     def effect(self):
-        self.options.radius = self.unittouu(str(self.options.radius) + 'px')
+        self.options.radius = self.svg.unittouu(str(self.options.radius) + self.options.unit) 
         
         if self.options.radius == 0:
             return
         
-        for id, node in self.selected.iteritems():
-            _shape = inkex.etree.QName(node.tag).localname
+        for id, node in self.svg.selected.items():
+            _shape = etree.QName(node.tag).localname
             if _shape != "path":
                 inkex.errormsg("Fillet and chamfer only operates on path: %s is %s" % (id, _shape))
             else:
-                # inkex.errormsg(inkex.etree.tostring(node))
+                # inkex.errormsg(etree.tostring(node))
                 attrib = {k:v for k,v in node.attrib.items()}
                 attrib['d'] = self.add_fillet_to_path(attrib['d'])
                 self.addEle(inkex.addNS('path','svg'), node.getparent(), attrib)
 
+        if self.options.remove:
+            node.getparent().remove(node)
+				
 if __name__ == '__main__':
     e = FilletChamfer()
-    e.affect()
+    e.run()
