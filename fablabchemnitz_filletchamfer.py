@@ -1,4 +1,4 @@
-#! /usr/bin/python2
+#!/usr/bin/env python3
 '''
 Copyright (C) 2018 Tao Wei taowei@buffalo.edu
 
@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
-import inkex, simplestyle, math
-from simpletransform import computePointInNode
+import inkex
+import math
 import svgpathtools
 from lxml import etree
 
@@ -290,5 +290,4 @@ class FilletChamfer(inkex.Effect):
             node.getparent().remove(node)
 				
 if __name__ == '__main__':
-    e = FilletChamfer()
-    e.run()
+    FilletChamfer().run()
